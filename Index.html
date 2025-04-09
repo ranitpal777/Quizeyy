@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Who Knows Ranit Pal Best?</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Luckiest+Guy&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+    body {
+      background: linear-gradient(135deg, #ff6b6b, #ffd6d6);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      color: #fff;
+      overflow: hidden;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    .glow {
+      color: #fff;
+      text-shadow: 0 0 10px #fff, 0 0 20px #ff6b6b, 0 0 30px #ff6b6b;
+      font-family: 'Luckiest Guy', cursive;
+    }
+    .quote {
+      margin-bottom: 30px;
+      font-style: italic;
+    }
+    input {
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      width: 70%;
+      max-width: 300px;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 30px;
+      background-color: #fff;
+      color: #ff6b6b;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      transform: scale(1.1);
+      background-color: #ff8a8a;
+      color: white;
+    }
+    .question-box {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 20px;
+      color: #333;
+      max-width: 90%;
+      margin: 20px;
+    }
+    .options button {
+      display: block;
+      margin: 10px auto;
+      width: 100%;
+      max-width: 300px;
+      background-color: #ffefef;
+    }
+    .correct { background-color: #a0ffa0 !important; }
+    .wrong { background-color: #ffb0b0 !important; }
+    #resultSection { display: none; }
+    canvas { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div id="startSection">
+    <h1>Who Knows <span class="glow">Ranit </span> Best?</h1>
+    <p class="quote">“Real ones know, fake ones show.”</p>
+    <input type="text" id="playerName" placeholder="Enter Your Name...">
+    <button onclick="startQuiz()">Challenge Accepted</button>
+  </div>
+
+  <div id="quizSection" style="display: none">
+    <div class="question-box">
+      <h2 id="questionText"></h2>
+      <div id="options" class="options"></div>
+    </div>
+  </div>
+
+  <div id="resultSection">
+    <h2 id="finalText"></h2>
+    <canvas id="pieChart" width="200" height="200"></canvas>
+    <h3>Top 5 Real Friends</h3>
+    <ol id="leaderboard"></ol>
+    <button onclick="location.reload()">Play Again</button>
+  </div>
+
+  <script>
+    const questions = [
+      { q: "Which food do I love the most?", a: "Biriyani", o: ["Panipuri", "Biriyani"] },
+      { q: "Am I single or mingle?", a: "Mingle", o: ["Single", "Mingle"] },
+      { q: "My favorite color?", a: "Black", o: ["Red", "Black"] },
+      { q: "My favorite game?", a: "BGMI", o: ["BGMI", "Free Fire"] },
+      { q: "Which is my school?", a: "S.H.S", o: ["K.H.S", "S.H.S"] },
+      { q: "My favorite cricket player?", a: "MS Dhoni (MSD)", o: ["Rishabh Pant", "MS Dhoni (MSD)"] },
+      { q: "My favorite IPL team?", a: "CSK", o: ["KKR", "CSK"] },
+      { q: "Which is my favorite toy?", a: "Hot Wheels", o: ["Monster Trucks", "Hot Wheels"] },
+      { q: "My stream in school/college?", a: "Science", o: ["Arts", "Science"] },
+      { q: "The first letter of my favorite person’s name?", a: "T", o: ["P", "R", "S", "Q", "A", "T"] }
+    ];
+
+    let player = "";
+    let score = 0;
+    let current = 0;
+    let randomizedQuestions = [];
+
+    function startQuiz() {
+      player = document.getElementById("playerName").value.trim();
+      if (!player) return alert("Please enter your name!");
+      randomizedQuestions = [...questions].sort(() => 0.5 - Math.random());
+      document.getElementById("startSection").style.display = "none";
+      document.getElementById("quizSection").style.display = "block";
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      const q = randomizedQuestions[current];
+      document.getElementById("questionText").textContent = q.q;
+      const shuffled = [...q.o].sort(() => 0.5 - Math.random());
+      document.getElementById("options").innerHTML = "";
+      shuffled.forEach(option => {
+        const btn = document.createElement("button");
+        btn.textContent = option;
+        btn.onclick = () => checkAnswer(option, q.a, btn);
+        document.getElementById("options").appendChild(btn);
+      });
+    }
+
+    function checkAnswer(selected, correct, btn) {
+      const buttons = document.querySelectorAll("#options button");
+      buttons.forEach(b => b.disabled = true);
+      if (selected === correct) {
+        btn.classList.add("correct");
+        score++;
+      } else {
+        btn.classList.add("wrong");
+        buttons.forEach(b => {
+          if (b.textContent === correct) b.classList.add("correct");
+        });
+      }
+      setTimeout(() => {
+        current++;
+        if (current < 10) loadQuestion();
+        else showResult();
+      }, 1000);
+    }
+
+    function showResult() {
+      document.getElementById("quizSection").style.display = "none";
+      document.getElementById("resultSection").style.display = "block";
+      const percent = Math.round((score / 10) * 100);
+      document.getElementById("finalText").textContent = `You are ${percent}% Real Friend of Ranit!`;
+
+      const ctx = document.getElementById('pieChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Real', 'Fake'],
+          datasets: [{ data: [percent, 100 - percent], backgroundColor: ['#4caf50', '#f44336'] }]
+        },
+        options: { responsive: true, cutout: '70%' }
+      });
+
+      const leaderboard = JSON.parse(localStorage.getItem("leaderboard") || "[]");
+      leaderboard.push({ name: player, score: percent });
+      leaderboard.sort((a, b) => b.score - a.score);
+      localStorage.setItem("leaderboard", JSON.stringify(leaderboard.slice(0, 5)));
+
+      const list = document.getElementById("leaderboard");
+      list.innerHTML = leaderboard.slice(0, 5).map(e => `<li>${e.name} - ${e.score}%</li>`).join('');
+    }
+  </script>
+</body>
+</html>
